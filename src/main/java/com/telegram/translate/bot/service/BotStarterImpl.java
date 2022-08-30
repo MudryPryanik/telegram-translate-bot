@@ -12,12 +12,12 @@ public class BotStarterImpl implements BotStarter {
     @Value("${application.token}")
     private String botToken;
 
+    private final OffsetContainer offsetContainer;
     private final TelegramApi telegramApi;
 
     @Override
     public void startBot() {
         UpdatesDto updates = telegramApi.getUpdates(botToken);
-
         System.out.println(updates);
     }
 }
