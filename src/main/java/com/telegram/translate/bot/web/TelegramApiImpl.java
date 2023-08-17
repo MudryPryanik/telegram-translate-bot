@@ -4,6 +4,7 @@ import com.telegram.translate.bot.service.OffsetContainer;
 import com.telegram.translate.bot.web.dto.request.MessageDto;
 import com.telegram.translate.bot.web.dto.response.UpdatesDto;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 
@@ -29,7 +30,8 @@ class TelegramApiImpl implements TelegramApi {
         String finalUri = String.format(URL_TEMPLATE_SEND_MESSAGE, botToken);
         webClient.post()
                 .uri(finalUri)
-                .body(messageDto, MessageDto.class)
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(messageDto)
                 .retrieve();
     }
 }

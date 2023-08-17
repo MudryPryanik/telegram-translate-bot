@@ -1,11 +1,13 @@
 package com.telegram.translate.bot.service;
 
 import com.telegram.translate.bot.web.TelegramApi;
+import com.telegram.translate.bot.web.dto.request.MessageDto;
 import com.telegram.translate.bot.web.dto.response.UpdatesDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.util.Comparator;
 
 @Service
@@ -22,13 +24,32 @@ public class BotStarterImpl implements BotStarter {
     public void startBot() {
         UpdatesDto updates = telegramApi.getUpdates(botToken);
 
-
         System.out.println(updates);
 
-        offsetContainer.set(updates.getUpdates()
+        UpdatesDto.UpdateDto current = updates.getUpdates()
                 .stream()
-                .map(UpdatesDto.UpdateDto::getUpdateId)
-                .max(Comparator.comparing(id -> id))
-                .orElse(null));
+                .min(Comparator.comparing(UpdatesDto.UpdateDto::getUpdateId))
+                .orElse(null);
+
+        if (current == null) {
+            return;
+        }
+
+        telegramApi.sendMessage(botToken,
+                new MessageDto(current.getMessage().getChat().getId(), getAnswer(current.getText())));
+
+        offsetContainer.set(current.getUpdateId());
+    }
+
+    private String getAnswer(String inputText) {
+        try {
+            String[] numbers = inputText.split(";");
+            BigDecimal a = BigDecimal.valueOf(Double.parseDouble(numbers[0]));
+            BigDecimal b = BigDecimal.valueOf(Double.parseDouble(numbers[1]));
+            BigDecimal c = BigDecimal.valueOf(Double.parseDouble(numbers[2]));
+            return String.valueOf((a.min(b)).divide(a.min(c)).multiply(BigDecimal.valueOf(100.0)));
+        } catch (Exception e) {
+            return "Петя, ты закинул что то не то";
+        }
     }
 }
