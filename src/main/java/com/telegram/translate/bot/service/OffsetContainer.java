@@ -6,10 +6,11 @@ import java.util.concurrent.atomic.AtomicLong;
 
 @Component
 public class OffsetContainer {
-    private AtomicLong offset;
+    private final AtomicLong offset = new AtomicLong(0);
 
-    public void setOffset(Long offset) {
-        this.offset.setPlain(offset);
+    public void set(Long lastMessageId) {
+        if (lastMessageId == null) return;
+        this.offset.set(lastMessageId + 1);
     }
 
     public Long getOffset() {
