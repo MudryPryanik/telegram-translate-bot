@@ -16,8 +16,6 @@ public class UpdatesDto {
         @JsonProperty("update_id")
         private Long updateId;
         private MessageDto message;
-        private String date; //TODO
-        private String text;
     }
 
     @Data
@@ -53,6 +51,7 @@ public class UpdatesDto {
         private UserDto from;
         private ChatDto chat;
         private String text;
+        private Long date;
     }
 
     @Data

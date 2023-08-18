@@ -8,7 +8,13 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 import java.util.Comparator;
+import java.util.TimeZone;
 
 @Service
 @RequiredArgsConstructor
@@ -22,32 +28,44 @@ public class BotStarterImpl implements BotStarter {
 
     @Override
     public void startBot() {
-        UpdatesDto updates = telegramApi.getUpdates(botToken);
+        UpdatesDto.UpdateDto current = null;
+        try {
+            UpdatesDto updates = telegramApi.getUpdates(botToken);
 
-        System.out.println(updates);
+            System.out.println(updates);
 
-        UpdatesDto.UpdateDto current = updates.getUpdates()
-                .stream()
-                .min(Comparator.comparing(UpdatesDto.UpdateDto::getUpdateId))
-                .orElse(null);
+            current = updates.getUpdates()
+                    .stream()
+                    .max(Comparator.comparing(UpdatesDto.UpdateDto::getUpdateId))
+                    .orElse(null);
 
-        if (current == null) {
-            return;
+            if (current == null) {
+                return;
+            }
+
+            LocalDateTime messageTime = LocalDateTime.ofInstant(Instant.ofEpochSecond(current.getMessage().getDate()),
+                            TimeZone.getDefault().toZoneId());
+
+            if (ChronoUnit.SECONDS.between(messageTime, LocalDateTime.now()) > 5) {
+                return;
+            }
+
+            telegramApi.sendMessage(botToken,
+                    new MessageDto(current.getMessage().getChat().getId(), getAnswer(current.getMessage().getText())));
+        } finally {
+            if (current != null) {
+                offsetContainer.set(current.getUpdateId());
+            }
         }
-
-        telegramApi.sendMessage(botToken,
-                new MessageDto(current.getMessage().getChat().getId(), getAnswer(current.getText())));
-
-        offsetContainer.set(current.getUpdateId());
     }
 
     private String getAnswer(String inputText) {
         try {
             String[] numbers = inputText.split(";");
-            BigDecimal a = BigDecimal.valueOf(Double.parseDouble(numbers[0]));
-            BigDecimal b = BigDecimal.valueOf(Double.parseDouble(numbers[1]));
-            BigDecimal c = BigDecimal.valueOf(Double.parseDouble(numbers[2]));
-            return String.valueOf((a.min(b)).divide(a.min(c)).multiply(BigDecimal.valueOf(100.0)));
+            Double a = Double.parseDouble(numbers[0]);
+            Double b = Double.parseDouble(numbers[1]);
+            Double c = Double.parseDouble(numbers[2]);
+            return String.valueOf((a-b)/(a-c)*100);
         } catch (Exception e) {
             return "Петя, ты закинул что то не то";
         }

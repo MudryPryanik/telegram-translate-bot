@@ -13,7 +13,7 @@ public class BotStartScheduler {
 
     private final BotStarter botStarter;
 
-    @Scheduled(fixedDelay = 1, timeUnit = TimeUnit.SECONDS)
+    @Scheduled(fixedDelay = 500)
     public void update() {
         botStarter.startBot();
     }
